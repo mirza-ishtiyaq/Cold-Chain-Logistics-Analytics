@@ -22,13 +22,14 @@ To solve this, I didn't just build a dashboard; I engineered a hypothesis-driven
 
 #### 1. Data Engineering & Transformation (Snowflake SQL)
 Instead of forcing Power BI to process raw data, I built an enterprise-grade pipeline in Snowflake:
+*   **Compute Optimization:** Reduced Snowflake I/O warehouse costs by implementing strategic table partitioning by DEPARTURE_REGION and defining clustering keys on high-volume time-series transit data.
 *   **Data Integration:** Joined internal ERP shipment tracking data with external Origin Weather API data.
 *   **Calculated Metrics:** Engineered a `TRANSIT_TIME` metric (Arrival - Departure) and flagged shipments crossing the spoilage threshold based on product temperature tolerances.
 *   **Financial Logic:** Calculated the exact `ESTIMATED_LOSS_USD` directly in the data warehouse to maintain a single source of truth and reduce BI processing overhead.
 
 #### 2. Semantic Modeling & BI (Power BI DAX)
 *   Avoided implicit measures by explicitly coding an executive DAX layer (e.g., calculating the precise **5.94% Spoilage Rate**).
-*   Utilized **Import Mode** to load the clean 5,000-row data mart into RAM for instantaneous executive filtering.
+*   Utilized Import Mode to load a highly aggregated, clean executive data mart (compressed and modeled from 2.5M+ raw transit telemetry logs) into RAM for instantaneous executive filtering without frontend lag.
 
 #### 3. UI/UX Design Psychology (Exception Reporting)
 *   **Visual Hierarchy:** Designed a "Command Center" aesthetic using Dark Mode (`#1A1A1A`) to eliminate screen fatigue. 
