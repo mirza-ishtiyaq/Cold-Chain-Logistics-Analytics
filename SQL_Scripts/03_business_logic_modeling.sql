@@ -8,11 +8,11 @@ SELECT
     s.shipment_id,
     s.product,
     s.clean_origin AS Origin_Hub,
-    s.clean_destination AS Distination_Hub,
+    s.clean_destination AS Destination_Hub,
     s.clean_carrier AS Carrier,
     s.Spoiled_Flag,
     s.standardized_departure_time AS Departure_Time,
-    s.standardized_arrival_time AS Arrival_time,
+    s.standardized_arrival_time AS Arrival_Time,
     
     -- KPI 1: Operational Efficiency (Transit Time)
     -- Calculate the exact hours a package spent in transit
@@ -33,9 +33,9 @@ SELECT
         ELSE 0 
     END AS Estimated_Loss_USD
     
-FROM PHARMA_LOGISTICS.ANALYTICS.CLEAN_SHIPMENTS s-- We use a LEFT JOIN to keep all shipments, even if the weather API failed to capture that day
-LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
+FROM PHARMA_LOGISTICS.ANALYTICS.CLEAN_SHIPMENTS s
 -- We use a LEFT JOIN to keep all shipments, even if the weather API failed to capture that day
+LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
     ON s.clean_origin = w.CLEAN_HUB_CITY
     -- CRITICAL: We must convert the Timestamp to a Date to match the weather table's granularity
     AND TO_DATE(s.standardized_departure_time) = w.Standardized_Date; 
