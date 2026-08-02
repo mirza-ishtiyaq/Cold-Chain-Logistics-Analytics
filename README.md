@@ -1,6 +1,6 @@
 # Pharmaceutical Cold-Chain Logistics: End-to-End Spoilage Analytics & Revenue Protection
 
-![Dashboard Preview](./Assets/dashboard_preview.jpg)
+![Dashboard Preview](./docs/images/dashboard_preview.jpg)
 
 ## Executive Summary & Business Context
 In pharmaceutical logistics, maintaining cold-chain compliance is critical. A single temperature breach can compromise life-saving products (mRNA vaccines, biologics, insulin) and cost millions in spoiled inventory. In this project, I engineered an end-to-end data pipeline analyzing **5,000 pharmaceutical shipments** across major Indian logistics hubs (Hyderabad, Mumbai, Delhi, Chennai, Bangalore).
@@ -20,23 +20,24 @@ To solve this, I combined Python-based REST API data extraction with an enterpri
 * **Business Intelligence:** Power BI (Import Mode / Exception Reporting UX)
 
 ```
-Cold-Chain-Logistics-Analytics/
+snowflake-pharma-logistics/
 ├── README.md                                          # Documentation & executive insights
-├── Assets/
-│   └── dashboard_preview.jpg                          # Power BI Executive Dashboard Preview
-├── Dashboard/
+├── docs/
+│   └── images/
+│       └── dashboard_preview.jpg                      # Power BI Executive Dashboard Preview
+├── dashboards/
 │   └── Cold_Logistics_Financial_Loss_Analysis.pbix    # Interactive Power BI Report
-├── SQL_Scripts/
-│   ├── 01_setup_raw_layer.sql                        # Snowflake DDL for RAW tables
-│   ├── 02_data_cleaning_and_transformation.sql       # SQL cleaning, trimming & date parsing
-│   └── 03_business_logic_modeling.sql                # Data Mart join logic & loss calculations
-├── API_Weather_Dataset_Script/
-│   └── pharma_shipments_Analysis.ipynb                # Weather API fetch & synthetic data pipeline
-└── Raw_Dataset/
-    ├── Parma_Dataset/
-    │   └── dirty_pharma_shipments.csv                 # 5,000 raw shipment records
-    └── Weather_Dataset/
-        └── jan_2026_to_July_2026_Dataset.csv          # Historical hub temperature telemetry
+├── sql/
+│   ├── 01_setup_raw_layer.sql                         # Snowflake DDL for RAW tables
+│   ├── 02_data_cleaning_and_transformation.sql        # SQL cleaning, trimming & date parsing
+│   ├── 03_business_logic_modeling.sql                 # Data Mart join logic & loss calculations
+│   └── 04_data_quality_checks.sql                     # Duplicate-ID & weather-join coverage checks
+├── notebooks/
+│   └── pharma_shipments_analysis.ipynb                # Weather API fetch & synthetic data pipeline
+└── data/
+    └── raw/
+        ├── dirty_pharma_shipments.csv                 # 5,000 raw shipment records
+        └── jan_2026_to_july_2026_dataset.csv          # Historical hub temperature telemetry
 ```
 
 ---
@@ -65,7 +66,7 @@ Cold-Chain-Logistics-Analytics/
 ## Data Pipeline Deep-Dive
 
 ### 1. External Weather API Extraction (Python)
-To test the hypothesis that ambient origin temperatures drive spoilage, I wrote a Python script in `pharma_shipments_Analysis.ipynb` querying the **Open-Meteo Historical Weather REST API** (`archive-api.open-meteo.com`). This fetched daily maximum temperatures (°C) across all 5 departure hubs for the analysis window.
+To test the hypothesis that ambient origin temperatures drive spoilage, I wrote a Python script in `pharma_shipments_analysis.ipynb` querying the **Open-Meteo Historical Weather REST API** (`archive-api.open-meteo.com`). This fetched daily maximum temperatures (°C) across all 5 departure hubs for the analysis window.
 
 ```python
 import requests
@@ -159,28 +160,58 @@ LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
     AND TO_DATE(s.Standardized_Departure_Time) = w.Standardized_Date;
 ```
 
+### 4. Data Quality & Integrity Checks (`04_data_quality_checks.sql`)
+Two checks I added after validating the pipeline against the raw CSVs, because both silently distort the GOLD-layer financial model if left unchecked:
+* **Duplicate `Shipment_ID` detection:** `RAW_SHIPMENTS` contains **124 `Shipment_ID` values appearing more than once (250 rows total)** — and these aren't harmless duplicates: **84 of them disagree on `Product`** and **14 disagree on `Spoiled_Flag`** across the repeated rows, meaning they're conflicting records, not clean re-sends.
+* **Orphaned shipment-to-weather join coverage:** the `LEFT JOIN` on Origin Hub + Departure Date only resolves for **49% of shipments (2,446 / 5,000)**. `RAW_WEATHER` only covers **Jan–Jun 2025**, while `RAW_SHIPMENTS` departure dates run through **Jan 2026** — so any temperature-driven finding built on the join is backed by roughly half the shipment population.
+
+```sql
+-- Duplicate Shipment_ID detection (conflicting, not clean, duplicates)
+SELECT
+    Shipment_ID,
+    COUNT(*)                      AS Record_Count,
+    COUNT(DISTINCT Product)       AS Distinct_Product_Values,
+    COUNT(DISTINCT Spoiled_Flag)  AS Distinct_Spoiled_Flag_Values
+FROM PHARMA_LOGISTICS.RAW.RAW_SHIPMENTS
+GROUP BY Shipment_ID
+HAVING COUNT(*) > 1;
+
+-- Shipment-to-weather join coverage
+SELECT
+    COUNT(*)                                        AS Total_Shipments,
+    COUNT(w.Max_Temp_C)                             AS Shipments_With_Weather_Match,
+    ROUND(COUNT(w.Max_Temp_C) / COUNT(*) * 100, 2)  AS Match_Rate_Pct
+FROM PHARMA_LOGISTICS.ANALYTICS.CLEAN_SHIPMENTS s
+LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
+    ON s.Clean_Origin = w.Clean_Hub_City
+    AND TO_DATE(s.Standardized_Departure_Time) = w.Standardized_Date;
+```
+
 ---
 
 ## Executive Findings & Actionable Recommendations
 
 ### 1. Financial Impact & Spoilage Rate
-* **Total YTD Loss:** **$709,550** lost across **297 spoiled packages** out of 5,000 shipments.
+* **Total YTD Loss:** **$708,550** lost across **297 spoiled packages** out of 5,000 shipments.
 * **Overall Spoilage Rate:** **5.94%** (exceeding the industry target benchmark of < 2.0%).
 
-### 2. The "Thermal Danger Zone" (Root-Cause Proven)
-Cross-analyzing transit time against origin departure temperature revealed a clear failure threshold:
-* Spoilage rates surge exponentially when **Origin Departure Temperature > 30°C AND Transit Time > 40 Hours**.
-* Standard cold-chain packaging insulated for 24-36 hours fails consistently under high ambient heat when transit exceeds 40 hours.
+### 2. Ambient Temperature & Transit Time (Directional Signal, Not Statistically Proven)
+Cross-analyzing transit time against origin departure temperature — available for only **49% of shipments** (see the weather-join coverage gap above) — shows a mild directional effect, not a proven causal driver:
+* Shipments departing when **Origin Departure Temperature > 30°C AND Transit Time > 40 Hours** spoil at **6.05%**, versus **5.18%** for all other shipments in the matched sample.
+* A chi-square test on this split is **not statistically significant at this sample size** (p ≈ 0.41). The honest read: this is a monitoring hypothesis worth tracking for SLA design, not a confirmed root cause — closing the weather-data coverage gap is the next step to test it properly.
 
 ### 3. 3PL Carrier Performance & Accountability
-* **Delhivery ($153K loss)** and **FedEx ($145K loss)** account for **~$298K (42% of total financial loss)** due to excessive transit delays on high-temp origin routes.
+* **Delhivery ($153,550 loss)** and **FedEx ($145,200 loss)** account for **~$298,750 (42% of total financial loss)** — the two highest-loss carriers by a clear margin over BlueDart ($144,150), DHL ($121,750), and Shadowfax ($119,250).
 
 ### 4. Strategic Recommendations for Supply Chain Leadership
-1. **Recoup Lost Capital:** Immediately invoke SLA penalty clauses with Delhivery and FedEx to recover **~$298K** in documented carrier delays.
-2. **Dynamic Packaging SOP:** Mandate heavy-duty thermal insulation (>72-hr rating) for all shipments departing hubs where ambient temperatures exceed 30°C on routes with expected transit times over 40 hours.
+1. **Recoup Lost Capital:** Invoke SLA penalty clauses with Delhivery and FedEx to recover **~$298,750** in documented carrier-attributed losses.
+2. **Close the Data Gap Before Mandating Packaging Changes:** Extend the Open-Meteo pull to cover the full shipment date range (currently only 49% of shipments have a matching weather record) and re-test the >30°C / >40-hr transit hypothesis on the complete population before mandating thermal-insulation SOPs on the strength of the current directional-but-inconclusive signal.
+3. **Fix Upstream Data Integrity:** Deduplicate the 124 `Shipment_ID` values in `RAW_SHIPMENTS` that carry conflicting `Product` / `Spoiled_Flag` values across repeated rows before these loss figures are used for carrier SLA enforcement.
 
 ---
 
 ## Author & Project Info
-* **Author:** Mirza Ishtiyaq Baig *(Data Analyst / Analytics Engineer)*
-* **Repository:** `Cold-Chain-Logistics-Analytics`
+**Author:** Mirza Ishtiyaq Baig — Data Analyst / Analytics Engineer
+**LinkedIn:** https://www.linkedin.com/in/mirzaishtiyaqbaig/
+**Email:** mirzaishtiyaqbaig1@gmail.com
+**GitHub:** https://github.com/mirza-ishtiyaq
