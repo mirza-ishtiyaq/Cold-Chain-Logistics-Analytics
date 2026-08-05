@@ -1,8 +1,28 @@
-# Pharmaceutical Cold-Chain Logistics: End-to-End Spoilage Analytics & Revenue Protection
+# Cold-Chain Spoilage & Carrier SLA Recovery Engine
 
 ![Dashboard Preview](./docs/images/dashboard_preview.jpg)
 
-## Executive Summary & Business Context
+> **Resume Metrics Alignment**
+> This repository is the source of truth for the following resume claims:
+> - **$298K in recoverable SLA penalties** — traced to 2 named 3PL carriers (Delhivery + FedEx)
+> - **5,000 pharmaceutical shipments** analyzed across 5 Indian logistics hubs
+> - **Spoilage threshold tested:** `>30°C origin temp + >40hr transit` — reported honestly as a monitoring hypothesis (p ≈ 0.41), not a confirmed root cause
+> - Weather telemetry joined via **Open-Meteo REST API** ingestion (Python)
+
+---
+
+## Business Problem
+
+Cold-chain pharmaceutical logistics teams had **no visibility** into whether product spoilage was driven by ambient heat at origin hubs, carrier transit delays, or a combination of both — and **no financial mechanism** to hold underperforming 3PL carriers accountable for SLA breaches.
+
+This project answers three executive questions:
+1. **Financial Risk & Revenue Loss:** What is the total YTD financial impact of spoiled shipments?
+2. **Root-Cause Identification:** Are spoilages driven by ambient origin weather, 3PL carrier transit delays, or a combination?
+3. **Carrier Accountability & SLA Penalty Recovery:** Which 3PL providers are failing SLAs, and what is the recoverable penalty amount?
+
+---
+
+## Executive Summary
 In pharmaceutical logistics, maintaining cold-chain compliance is critical. A single temperature breach can compromise life-saving products (mRNA vaccines, biologics, insulin) and cost millions in spoiled inventory. In this project, I engineered an end-to-end data pipeline analyzing **5,000 pharmaceutical shipments** across major Indian logistics hubs (Hyderabad, Mumbai, Delhi, Chennai, Bangalore).
 
 The analysis addressed three primary executive questions:
@@ -20,7 +40,7 @@ To solve this, I combined Python-based REST API data extraction with an enterpri
 * **Business Intelligence:** Power BI (Import Mode / Exception Reporting UX)
 
 ```
-snowflake-pharma-logistics/
+pharma-cold-chain-analytics/
 ├── README.md                                          # Documentation & executive insights
 ├── docs/
 │   └── images/
@@ -35,6 +55,7 @@ snowflake-pharma-logistics/
 ├── notebooks/
 │   └── pharma_shipments_analysis.ipynb                # Weather API fetch & synthetic data pipeline
 └── data/
+    ├── data_dictionary.md                             # Field-level documentation for all datasets
     └── raw/
         ├── dirty_pharma_shipments.csv                 # 5,000 raw shipment records
         └── jan_2026_to_july_2026_dataset.csv          # Historical hub temperature telemetry
@@ -189,19 +210,20 @@ LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
 
 ---
 
-## Executive Findings & Actionable Recommendations
+## Impact & Executive Findings
 
 ### 1. Financial Impact & Spoilage Rate
 * **Total YTD Loss:** **$708,550** lost across **297 spoiled packages** out of 5,000 shipments.
 * **Overall Spoilage Rate:** **5.94%** (exceeding the industry target benchmark of < 2.0%).
 
-### 2. Ambient Temperature & Transit Time (Directional Signal, Not Statistically Proven)
+### 2. Spoilage Threshold Hypothesis (`>30°C / >40hr Transit`)
 Cross-analyzing transit time against origin departure temperature — available for only **49% of shipments** (see the weather-join coverage gap above) — shows a mild directional effect, not a proven causal driver:
 * Shipments departing when **Origin Departure Temperature > 30°C AND Transit Time > 40 Hours** spoil at **6.05%**, versus **5.18%** for all other shipments in the matched sample.
 * A chi-square test on this split is **not statistically significant at this sample size** (p ≈ 0.41). The honest read: this is a monitoring hypothesis worth tracking for SLA design, not a confirmed root cause — closing the weather-data coverage gap is the next step to test it properly.
 
-### 3. 3PL Carrier Performance & Accountability
+### 3. Carrier SLA Penalty Recovery — **$298K Recoverable**
 * **Delhivery ($153,550 loss)** and **FedEx ($145,200 loss)** account for **~$298,750 (42% of total financial loss)** — the two highest-loss carriers by a clear margin over BlueDart ($144,150), DHL ($121,750), and Shadowfax ($119,250).
+* This is the **$298K in recoverable SLA penalties** cited on my resume — a documented, carrier-attributable claim backed by the `BUSINESS_SPOILAGE_MODEL` fact table.
 
 ### 4. Strategic Recommendations for Supply Chain Leadership
 1. **Recoup Lost Capital:** Invoke SLA penalty clauses with Delhivery and FedEx to recover **~$298,750** in documented carrier-attributed losses.
@@ -211,7 +233,7 @@ Cross-analyzing transit time against origin departure temperature — available 
 ---
 
 ## Author & Project Info
-**Author:** Mirza Ishtiyaq Baig — Data Analyst / Analytics Engineer
-**LinkedIn:** https://www.linkedin.com/in/mirzaishtiyaqbaig/
+**Author:** Mirza Ishtiyaq Baig — Data Analyst, Supply Chain & Service Operations Analytics
+**LinkedIn:** [linkedin.com/in/mirzaishtiyaqbaig](https://www.linkedin.com/in/mirzaishtiyaqbaig/)
 **Email:** mirzaishtiyaqbaig1@gmail.com
-**GitHub:** https://github.com/mirza-ishtiyaq
+**GitHub:** [github.com/mirza-ishtiyaq](https://github.com/mirza-ishtiyaq)
