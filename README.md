@@ -25,11 +25,6 @@ This project answers three executive questions:
 ## Executive Summary
 In pharmaceutical logistics, maintaining cold-chain compliance is critical. A single temperature breach can compromise life-saving products (mRNA vaccines, biologics, insulin) and cost millions in spoiled inventory. In this project, I engineered an end-to-end data pipeline analyzing **5,000 pharmaceutical shipments** across major Indian logistics hubs (Hyderabad, Mumbai, Delhi, Chennai, Bangalore).
 
-The analysis addressed three primary executive questions:
-1. **Financial Risk & Revenue Loss:** What is the total YTD financial impact of spoiled shipments?
-2. **Root-Cause Identification:** Are product spoilages driven by ambient origin weather, 3PL carrier transit delays, or a fatal combination of both?
-3. **Carrier Accountability & Action:** Which Third-Party Logistics (3PL) providers are failing SLAs, and how do we hold them financially accountable?
-
 To solve this, I combined Python-based REST API data extraction with an enterprise **Snowflake SQL Data Mart** and a **Power BI Executive Command Center**.
 
 ---
@@ -58,7 +53,7 @@ pharma-cold-chain-analytics/
     ├── data_dictionary.md                             # Field-level documentation for all datasets
     └── raw/
         ├── dirty_pharma_shipments.csv                 # 5,000 raw shipment records
-        └── jan_2026_to_july_2026_dataset.csv          # Historical hub temperature telemetry
+        └── jan_2025_to_july_2025_dataset.csv          # Historical hub temperature telemetry
 ```
 
 ---
@@ -213,7 +208,7 @@ LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
 ## Impact & Executive Findings
 
 ### 1. Financial Impact & Spoilage Rate
-* **Total YTD Loss:** **$708,550** lost across **297 spoiled packages** out of 5,000 shipments.
+* **Total YTD Loss:** **$708,550** lost across **297 spoiled packages** out of 5,000 shipments *(Note: includes $24,650 in losses attributed to missing/Unknown Carriers)*.
 * **Overall Spoilage Rate:** **5.94%** (exceeding the industry target benchmark of < 2.0%).
 
 ### 2. Spoilage Threshold Hypothesis (`>30°C / >40hr Transit`)

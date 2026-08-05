@@ -23,7 +23,7 @@ This document provides field-level documentation for every data source and deriv
 
 ---
 
-### `data/raw/jan_2026_to_july_2026_dataset.csv`
+### `data/raw/jan_2025_to_july_2025_dataset.csv`
 
 **Description:** Historical daily maximum temperature (°C) data pulled from the **Open-Meteo Historical Weather REST API** for all 5 departure hubs. Covers **January 2025 – June 2025** only.
 
@@ -44,7 +44,7 @@ This document provides field-level documentation for every data source and deriv
 | Table | Source | Row Count |
 |---|---|---|
 | `RAW_SHIPMENTS` | `dirty_pharma_shipments.csv` | 5,000+ (includes duplicates) |
-| `RAW_WEATHER` | `jan_2026_to_july_2026_dataset.csv` | ~905 rows (5 hubs × ~181 days) |
+| `RAW_WEATHER` | `jan_2025_to_july_2025_dataset.csv` | ~905 rows (5 hubs × ~181 days) |
 
 ### CLEAN / ANALYTICS Layer (`PHARMA_LOGISTICS.ANALYTICS`)
 
