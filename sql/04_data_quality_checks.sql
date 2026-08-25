@@ -32,10 +32,16 @@ ORDER BY Distinct_Spoiled_Flag_Values DESC, Distinct_Product_Values DESC;
 -- 124 duplicated Shipment_ID values (250 raw rows). Of those, 84 IDs
 -- disagree on Product and 14 disagree on Spoiled_Flag between the
 -- "duplicate" rows -- true data conflicts, not clean re-sends.
--- Recommended fix: apply a deterministic dedup rule (e.g. a
+-- Applied fix: 02_data_cleaning_and_transformation.sql excludes all
+-- 250 rows carrying a conflicting Shipment_ID from CLEAN_SHIPMENTS
+-- entirely, rather than picking one arbitrarily -- there's no
+-- trustworthy load/ingest timestamp yet to decide which version of a
+-- conflicting record is correct, so keeping any single one would
+-- inject an unverifiable value into the GOLD-layer financial model.
+-- Once the source ERP exposes a real ingest timestamp, this can be
+-- upgraded from "exclude" to a deterministic
 -- ROW_NUMBER() OVER (PARTITION BY Shipment_ID ORDER BY <load_ts> DESC)
--- QUALIFY = 1) in RAW before CLEAN_SHIPMENTS is built, once a
--- trustworthy load/ingest timestamp is available from the source ERP.
+-- QUALIFY = 1 pick, recovering the 250 rows instead of dropping them.
 
 -- 2. Orphaned Shipment-to-Weather Join Coverage
 -- BUSINESS_SPOILAGE_MODEL LEFT JOINs shipments to weather on
@@ -54,8 +60,9 @@ LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
     ON s.Clean_Origin = w.Clean_Hub_City
     AND TO_DATE(s.Standardized_Departure_Time) = w.Standardized_Date;
 
--- Validated against the source CSVs: only ~49% of shipments
--- (2,446 / 5,000) match a weather record. RAW_WEATHER only covers
+-- Validated against the source CSVs: only ~49% of clean shipments
+-- (2,329 / 4,750, after excluding the conflicting duplicate IDs above)
+-- match a weather record. RAW_WEATHER only covers
 -- 2025-01-01 through 2025-06-30, while RAW_SHIPMENTS departure dates
 -- run through Jan-2026 -- so any temperature-based root-cause claim
 -- in the GOLD layer is only backed by roughly half the shipment
