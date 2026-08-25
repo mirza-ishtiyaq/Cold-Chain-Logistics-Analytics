@@ -2,12 +2,7 @@
 
 ![Dashboard Preview](./docs/images/dashboard_preview.jpg)
 
-> **Resume Metrics Alignment**
-> This repository is the source of truth for the following resume claims:
-> - **$298K in recoverable SLA penalties** — traced to 2 named 3PL carriers (Delhivery + FedEx)
-> - **5,000 pharmaceutical shipments** analyzed across 5 Indian logistics hubs
-> - **Spoilage threshold tested:** `>30°C origin temp + >40hr transit` — reported honestly as a monitoring hypothesis (p ≈ 0.41), not a confirmed root cause
-> - Weather telemetry joined via **Open-Meteo REST API** ingestion (Python)
+A Snowflake + Power BI pipeline over 5,000 pharmaceutical shipments across 5 Indian logistics hubs, built to trace spoilage back to a cause — carrier delay, ambient heat, or both — and put a dollar figure on which 3PL carriers should be held accountable for it.
 
 ---
 
@@ -218,7 +213,7 @@ Cross-analyzing transit time against origin departure temperature — available 
 
 ### 3. Carrier SLA Penalty Recovery — **$298K Recoverable**
 * **Delhivery ($153,550 loss)** and **FedEx ($145,200 loss)** account for **~$298,750 (42% of total financial loss)** — the two highest-loss carriers by a clear margin over BlueDart ($144,150), DHL ($121,750), and Shadowfax ($119,250).
-* This is the **$298K in recoverable SLA penalties** cited on my resume — a documented, carrier-attributable claim backed by the `BUSINESS_SPOILAGE_MODEL` fact table.
+* That **~$298K** is a documented, carrier-attributable figure backed directly by the `BUSINESS_SPOILAGE_MODEL` fact table — not a rough estimate.
 
 ### 4. Strategic Recommendations for Supply Chain Leadership
 1. **Recoup Lost Capital:** Invoke SLA penalty clauses with Delhivery and FedEx to recover **~$298,750** in documented carrier-attributed losses.
