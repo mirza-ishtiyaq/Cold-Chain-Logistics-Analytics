@@ -73,10 +73,10 @@ This document provides field-level documentation for every data source and deriv
 
 ## Spoilage Threshold Business Rule
 
-The pipeline tests the following operational hypothesis:
+The pipeline checks the following operational rule:
 
 > **Excursion Threshold:** Shipments departing when **Origin Departure Temperature > 30°C** AND **Transit Time > 40 Hours** are at elevated spoilage risk.
 
 - Result: Spoilage rate in the excursion group is **6.16%** vs **5.28%** in the control group (clean population).
-- Statistical significance: **Not significant** at this sample size (χ² = 0.65, p ≈ 0.42).
-- Status: **Monitoring hypothesis** — not a confirmed root cause. Closing the weather-data coverage gap is required before this can be promoted to an actionable SOP.
+- Read: a small directional gap on the **~49% of shipments** with weather data — not a confirmed driver.
+- Status: **Monitoring signal** — not a confirmed root cause. Closing the weather-data coverage gap is required before this can be promoted to an actionable SOP.

@@ -22,7 +22,7 @@ In pharmaceutical logistics, maintaining cold-chain compliance is critical. A si
 
 To solve this, I combined Python-based REST API data extraction with an enterprise **Snowflake SQL Data Mart** and a **Power BI Executive Command Center**.
 
-**On the data:** the weather telemetry is real, pulled live from the Open-Meteo Historical Weather API for the actual coordinates of all 5 hubs. The shipment log is synthetic — generated in `pharma_shipments_analysis.ipynb` with a fixed random seed to mimic a real ERP extract's shape (mixed date formats, missing carriers, duplicate/conflicting IDs) — so the pipeline, cleaning logic, and statistical method are real and reusable, but the specific dollar figures below describe this generated dataset, not an actual carrier relationship.
+**On the data:** the weather telemetry is real, pulled live from the Open-Meteo Historical Weather API for the actual coordinates of all 5 hubs. The shipment log is synthetic — generated in `pharma_shipments_analysis.ipynb` with a fixed random seed to mimic a real ERP extract's shape (mixed date formats, missing carriers, duplicate/conflicting IDs) — so the pipeline, cleaning logic, and analysis approach are real and reusable, but the specific dollar figures below describe this generated dataset, not an actual carrier relationship.
 
 ---
 
@@ -215,7 +215,7 @@ LEFT JOIN PHARMA_LOGISTICS.ANALYTICS.CLEAN_WEATHER w
 ### 2. Spoilage Threshold Hypothesis (`>30°C / >40hr Transit`)
 Cross-analyzing transit time against origin departure temperature — available for only **~49% of shipments** (see the weather-join coverage gap above) — shows a mild directional effect, not a proven causal driver:
 * Shipments departing when **Origin Departure Temperature > 30°C AND Transit Time > 40 Hours** spoil at **6.16%**, versus **5.28%** for all other shipments in the matched sample.
-* A chi-square test on this split is **not statistically significant at this sample size** (χ² = 0.65, p ≈ 0.42). The honest read: this is a monitoring hypothesis worth tracking for SLA design, not a confirmed root cause — closing the weather-data coverage gap is the next step to test it properly.
+* That ~0.9-point gap is small and rests only on the **~49% of shipments** with weather data, so it reads as a monitoring signal worth tracking for SLA design, not a confirmed root cause — closing the weather-data coverage gap is the next step before acting on it.
 
 ### 3. Carrier SLA Penalty Recovery — **~$279.5K Recoverable**
 * **BlueDart ($141,750 loss)** and **Delhivery ($137,800 loss)** account for **~$279,550 (42% of total financial loss)** — the two highest-loss carriers by a narrow margin over FedEx ($135,500), DHL ($117,050), and Shadowfax ($109,300).
@@ -223,7 +223,7 @@ Cross-analyzing transit time against origin departure temperature — available 
 
 ### 4. Strategic Recommendations for Supply Chain Leadership
 1. **Recoup Lost Capital:** Invoke SLA penalty clauses with BlueDart and Delhivery to recover **~$279,550** in documented carrier-attributed losses.
-2. **Close the Data Gap Before Mandating Packaging Changes:** Extend the Open-Meteo pull to cover the full shipment date range (currently only ~49% of shipments have a matching weather record) and re-test the >30°C / >40-hr transit hypothesis on the complete population before mandating thermal-insulation SOPs on the strength of the current directional-but-inconclusive signal.
+2. **Close the Data Gap Before Mandating Packaging Changes:** Extend the Open-Meteo pull to cover the full shipment date range (currently only ~49% of shipments have a matching weather record) and re-run the >30°C / >40-hr transit comparison on the complete population before mandating thermal-insulation SOPs on the strength of the current directional-but-inconclusive signal.
 3. **Get a Real Ingest Timestamp From the Source ERP:** The 124 conflicting `Shipment_ID` records are currently excluded outright because there's no reliable way to pick which version is correct. A load/ingest timestamp on the source extract would let that exclusion become a deterministic "keep the latest record" rule instead, recovering those 250 shipments' worth of data.
 
 ---
